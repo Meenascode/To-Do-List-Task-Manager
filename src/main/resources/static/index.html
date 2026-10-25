@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>To-Do List &amp; Task Manager</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <script src="/js/theme-init.js"></script>
+  <link rel="stylesheet" href="/vendor/bootstrap/bootstrap.min.css">
+  <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<a class="visually-hidden-focusable position-absolute p-2 bg-white" href="#main">Skip to content</a>
+<div id="loadingBar" class="loading-bar" hidden role="progressbar" aria-label="Loading"></div>
+
+<div class="app-shell">
+  <!-- Desktop sidebar -->
+  <aside class="sidebar d-none d-lg-flex" aria-label="Sidebar">
+    <div class="brand"><span class="brand-logo"><i class="bi bi-check2-square"></i></span> TaskManager</div>
+    <nav class="side-nav" id="navDesktop" aria-label="Main navigation"></nav>
+    <div class="side-footer side-nav">
+      <a href="/api/export/tasks.csv" download><i class="bi bi-download"></i> Export CSV</a>
+    </div>
+  </aside>
+
+  <!-- Mobile sidebar -->
+  <div class="offcanvas offcanvas-start sidebar-mobile" tabindex="-1" id="mobileNav" aria-label="Navigation menu">
+    <div class="offcanvas-header">
+      <div class="brand p-0"><span class="brand-logo"><i class="bi bi-check2-square"></i></span> TaskManager</div>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close menu"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column">
+      <nav class="side-nav" id="navMobile" aria-label="Main navigation"></nav>
+      <div class="side-footer side-nav"><a href="/api/export/tasks.csv" download><i class="bi bi-download"></i> Export CSV</a></div>
+    </div>
+  </div>
+
+  <div class="main-area">
+    <header class="topbar">
+      <button class="btn btn-outline-secondary d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNav" aria-controls="mobileNav" aria-label="Open menu"><i class="bi bi-list"></i></button>
+      <h1 id="pageTitle" class="flex-grow-1">Dashboard</h1>
+      <button class="btn btn-primary" type="button" data-action="new"><i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">New task</span></button>
+      <button class="btn btn-outline-secondary" type="button" id="themeBtn" aria-label="Toggle dark mode"><i class="bi bi-moon-stars" id="themeIcon"></i></button>
+      <div class="dropdown">
+        <button class="btn p-0 border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Account menu"><span class="avatar" id="avatar">?</span></button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><span class="dropdown-item-text"><strong id="userName"></strong><br><small class="text-secondary" id="userEmail"></small></span></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><button class="dropdown-item" type="button" id="logoutBtn"><i class="bi bi-box-arrow-right"></i> Log out</button></li>
+        </ul>
+      </div>
+    </header>
+
+    <main id="main" class="content" tabindex="-1">
+
+      <!-- ================= DASHBOARD ================= -->
+      <section id="view-dashboard" data-view="dashboard" hidden>
+        <div class="card p-3 mb-3">
+          <form id="quickForm" class="row g-2 align-items-end" novalidate>
+            <div class="col-12 col-md">
+              <label class="form-label small mb-1" for="qTitle">Quick add</label>
+              <input class="form-control" id="qTitle" maxlength="200" placeholder="What needs to be done?" required>
+            </div>
+            <div class="col-6 col-md-2">
+              <label class="form-label small mb-1" for="qPriority">Priority</label>
+              <select class="form-select" id="qPriority">
+                <option value="LOW">Low</option><option value="MEDIUM" selected>Medium</option>
+                <option value="HIGH">High</option><option value="URGENT">Urgent</option>
+              </select>
+            </div>
+            <div class="col-6 col-md-2">
+              <label class="form-label small mb-1" for="qDue">Due date</label>
+              <input type="date" class="form-control" id="qDue">
+            </div>
+            <div class="col-12 col-md-auto d-flex gap-2">
+              <button class="btn btn-primary flex-grow-1" type="submit"><i class="bi bi-plus-lg"></i> Add</button>
+              <button class="btn btn-outline-secondary" type="button" data-action="new" title="More options">More…</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="row g-3 mb-3" id="statCards" aria-live="polite"></div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-12 col-lg-5"><div class="card p-3 h-100"><h2 class="h6 mb-3">Priority distribution</h2><div class="chart-box" id="priorityChartBox"></div></div></div>
+          <div class="col-12 col-lg-7"><div class="card p-3 h-100">
+            <div class="d-flex justify-content-between align-items-start mb-3 gap-2"><h2 class="h6 mb-0">Weekly productivity</h2><span class="small text-secondary text-end" id="trendText"></span></div>
+            <div class="chart-box" id="weeklyChartBox"></div></div></div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-12 col-lg-6"><div class="card p-3 h-100"><h2 class="h6 mb-3">Upcoming deadlines</h2><div id="upcomingList"></div></div></div>
+          <div class="col-12 col-lg-6"><div class="card p-3 h-100"><h2 class="h6 mb-3">Recent activity</h2><div id="activityList"></div></div></div>
+        </div>
+      </section>
+
+      <!-- ================= TASKS ================= -->
+      <section id="view-tasks" data-view="tasks" hidden>
+        <form class="card filter-bar" id="filterForm" role="search" aria-label="Filter tasks">
+          <div class="row g-2">
+            <div class="col-12 col-md-6 col-xl-3"><label class="visually-hidden" for="fQ">Search</label>
+              <div class="input-group"><span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input type="search" class="form-control" id="fQ" placeholder="Search title or description" maxlength="100"></div></div>
+            <div class="col-6 col-md-3 col-xl-2"><label class="visually-hidden" for="fStatus">Status</label>
+              <select class="form-select" id="fStatus"><option value="">All statuses</option><option value="TODO">To Do</option><option value="IN_PROGRESS">In Progress</option><option value="COMPLETED">Completed</option></select></div>
+            <div class="col-6 col-md-3 col-xl-2"><label class="visually-hidden" for="fPriority">Priority</label>
+              <select class="form-select" id="fPriority"><option value="">All priorities</option><option value="LOW">Low</option><option value="MEDIUM">Medium</option><option value="HIGH">High</option><option value="URGENT">Urgent</option></select></div>
+            <div class="col-6 col-md-3 col-xl-2"><label class="visually-hidden" for="fCategory">Category</label>
+              <select class="form-select" id="fCategory"><option value="">All categories</option></select></div>
+            <div class="col-6 col-md-3 col-xl-2"><label class="visually-hidden" for="fTag">Tag</label>
+              <select class="form-select" id="fTag"><option value="">All tags</option></select></div>
+            <div class="col-6 col-md-3 col-xl-2"><label class="visually-hidden" for="fDue">Due</label>
+              <select class="form-select" id="fDue"><option value="">Any due date</option><option value="overdue">Overdue</option><option value="today">Due today</option><option value="week">Next 7 days</option><option value="none">No due date</option></select></div>
+            <div class="col-6 col-md-3 col-xl-2"><label class="visually-hidden" for="fSort">Sort by</label>
+              <select class="form-select" id="fSort"><option value="createdAt">Sort: Created</option><option value="dueDate">Sort: Due date</option><option value="priority">Sort: Priority</option><option value="title">Sort: Title</option></select></div>
+            <div class="col-6 col-md-3 col-xl-2 d-flex gap-2">
+              <button class="btn btn-outline-secondary flex-fill" type="button" id="fDir" aria-label="Toggle sort direction" title="Toggle sort direction"><i class="bi bi-sort-down"></i></button>
+              <button class="btn btn-outline-secondary flex-fill" type="button" id="fClear">Clear</button>
+            </div>
+          </div>
+        </form>
+        <div class="small text-secondary mb-2" id="taskCount" aria-live="polite"></div>
+        <div id="taskList"></div>
+      </section>
+
+      <!-- ================= KANBAN ================= -->
+      <section id="view-kanban" data-view="kanban" hidden>
+        <p class="text-secondary small">Drag a card to another column, or use the status menu on the card.</p>
+        <div class="kanban" id="kanban"></div>
+      </section>
+
+      <!-- ================= CALENDAR ================= -->
+      <section id="view-calendar" data-view="calendar" hidden>
+        <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+          <button class="btn btn-outline-secondary" type="button" id="calPrev" aria-label="Previous month"><i class="bi bi-chevron-left"></i></button>
+          <h2 class="h5 mb-0 flex-grow-1 text-center" id="calTitle" aria-live="polite"></h2>
+          <button class="btn btn-outline-secondary" type="button" id="calNext" aria-label="Next month"><i class="bi bi-chevron-right"></i></button>
+          <button class="btn btn-outline-primary" type="button" id="calToday">Today</button>
+        </div>
+        <div class="cal-grid" id="calGrid" role="grid" aria-label="Task calendar"></div>
+        <div class="small text-secondary mt-2 d-flex flex-wrap gap-3">
+          <span><span class="cat-dot" style="background:var(--accent)"></span>Low</span>
+          <span><span class="cat-dot" style="background:var(--primary)"></span>Medium</span>
+          <span><span class="cat-dot" style="background:var(--warning)"></span>High</span>
+          <span><span class="cat-dot" style="background:var(--danger)"></span>Urgent</span>
+          <span><s>Struck through</s> = completed</span>
+          <span class="text-danger"><i class="bi bi-exclamation-triangle"></i> red background = overdue</span>
+        </div>
+        <div class="card p-3 mt-3" id="calDay"></div>
+      </section>
+
+      <!-- ================= CATEGORIES & TAGS ================= -->
+      <section id="view-categories" data-view="categories" hidden>
+        <div class="row g-3">
+          <div class="col-12 col-lg-7">
+            <div class="card p-3">
+              <h2 class="h6 mb-3">Categories</h2>
+              <form id="catForm" class="row g-2 mb-3" novalidate>
+                <div class="col"><label class="visually-hidden" for="catName">Category name</label>
+                  <input class="form-control" id="catName" maxlength="50" placeholder="New category name" required></div>
+                <div class="col-auto"><label class="visually-hidden" for="catColor">Color</label>
+                  <input type="color" class="form-control form-control-color" id="catColor" value="#2563eb" title="Category color"></div>
+                <div class="col-auto"><button class="btn btn-primary" type="submit" id="catSubmit"><i class="bi bi-plus-lg"></i> <span id="catSubmitText">Add</span></button>
+                  <button class="btn btn-outline-secondary d-none" type="button" id="catCancel">Cancel</button></div>
+              </form>
+              <div id="catList"></div>
+            </div>
+          </div>
+          <div class="col-12 col-lg-5">
+            <div class="card p-3"><h2 class="h6 mb-1">Tags</h2><p class="small text-secondary">Add tags while creating or editing a task. Deleting a tag removes it from all tasks.</p><div id="tagList"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= ACTIVITY ================= -->
+      <section id="view-activity" data-view="activity" hidden>
+        <div class="card p-3"><h2 class="h6 mb-3">Activity timeline (newest first)</h2><div id="activityFull"></div></div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- ============ Task create/edit modal ============ -->
+<div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <form class="modal-content" id="taskForm" novalidate>
+      <div class="modal-header"><h2 class="modal-title h5" id="taskModalTitle">New task</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      <div class="modal-body">
+        <div class="alert alert-danger py-2 small d-none" id="tfError" role="alert"></div>
+        <input type="hidden" id="tf-id"><input type="hidden" id="tf-parent">
+        <div class="mb-3"><label class="form-label" for="tf-title">Title <span class="text-danger">*</span></label>
+          <input class="form-control" id="tf-title" maxlength="200" required><div class="invalid-feedback" id="tfe-title"></div></div>
+        <div class="mb-3"><label class="form-label" for="tf-description">Description</label>
+          <textarea class="form-control" id="tf-description" rows="3" maxlength="2000"></textarea><div class="invalid-feedback" id="tfe-description"></div></div>
+        <div class="row g-3">
+          <div class="col-6 col-md-3"><label class="form-label" for="tf-status">Status</label>
+            <select class="form-select" id="tf-status"><option value="TODO">To Do</option><option value="IN_PROGRESS">In Progress</option><option value="COMPLETED">Completed</option></select></div>
+          <div class="col-6 col-md-3"><label class="form-label" for="tf-priority">Priority</label>
+            <select class="form-select" id="tf-priority"><option value="LOW">Low</option><option value="MEDIUM" selected>Medium</option><option value="HIGH">High</option><option value="URGENT">Urgent</option></select></div>
+          <div class="col-6 col-md-3"><label class="form-label" for="tf-due">Due date</label>
+            <input type="date" class="form-control" id="tf-due"><div class="invalid-feedback" id="tfe-dueDate"></div></div>
+          <div class="col-6 col-md-3"><label class="form-label" for="tf-category">Category</label>
+            <select class="form-select" id="tf-category"><option value="">None</option></select></div>
+        </div>
+        <div class="mt-3"><label class="form-label" for="tf-tags">Tags</label>
+          <input class="form-control" id="tf-tags" list="tagOptions" placeholder="Separate tags with commas, e.g. exam, lab" autocomplete="off">
+          <datalist id="tagOptions"></datalist><div class="form-text">Up to 10 tags. Existing tags are reused automatically.</div></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="tfSave">Save task</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Task details modal ============ -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content">
+      <div class="modal-header"><h2 class="modal-title h5 text-break" id="detailTitle">Task</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      <div class="modal-body" id="detailBody"></div>
+      <div class="modal-footer justify-content-between" id="detailFooter"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Confirm dialog ============ -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h2 class="modal-title h5" id="confirmTitle">Are you sure?</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      <div class="modal-body" id="confirmBody"></div>
+      <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmOk">Delete</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toasts" aria-live="polite" aria-atomic="true"></div>
+
+<script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+<script src="/vendor/chartjs/chart.umd.js"></script>
+<script src="/js/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in – To-Do List &amp; Task Manager</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <script src="/js/theme-init.js"></script>
+  <link rel="stylesheet" href="/vendor/bootstrap/bootstrap.min.css">
+  <link rel="stylesheet" href="/vendor/bootstrap-icons/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<main class="auth-wrap">
+  <div class="card auth-card">
+    <div class="text-center mb-3">
+      <div class="brand-logo mx-auto mb-2" style="width:3rem;height:3rem;font-size:1.5rem"><i class="bi bi-check2-square"></i></div>
+      <h1 class="h4 mb-0">To-Do List &amp; Task Manager</h1>
+      <p class="text-secondary small mb-0">Smart task management &amp; productivity</p>
+    </div>
+
+    <ul class="nav nav-pills nav-fill mb-3" role="tablist">
+      <li class="nav-item" role="presentation"><button class="nav-link active" id="tab-login" data-bs-toggle="pill" data-bs-target="#pane-login" type="button" role="tab" aria-controls="pane-login" aria-selected="true">Log in</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" id="tab-register" data-bs-toggle="pill" data-bs-target="#pane-register" type="button" role="tab" aria-controls="pane-register" aria-selected="false">Register</button></li>
+    </ul>
+
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="pane-login" role="tabpanel" aria-labelledby="tab-login">
+        <div id="loginAlert" class="alert alert-danger py-2 small d-none" role="alert"></div>
+        <form id="loginForm" novalidate>
+          <div class="mb-3">
+            <label for="loginEmail" class="form-label">Email</label>
+            <input type="email" class="form-control" id="loginEmail" autocomplete="username" required>
+          </div>
+          <div class="mb-3">
+            <label for="loginPassword" class="form-label">Password</label>
+            <input type="password" class="form-control" id="loginPassword" autocomplete="current-password" required>
+          </div>
+          <button class="btn btn-primary w-100" type="submit" id="loginBtn">Log in</button>
+        </form>
+      </div>
+
+      <div class="tab-pane fade" id="pane-register" role="tabpanel" aria-labelledby="tab-register">
+        <div id="registerAlert" class="alert alert-danger py-2 small d-none" role="alert"></div>
+        <form id="registerForm" novalidate>
+          <div class="mb-3">
+            <label for="regName" class="form-label">Name</label>
+            <input type="text" class="form-control" id="regName" autocomplete="name" maxlength="100" required>
+            <div class="invalid-feedback" id="err-name"></div>
+          </div>
+          <div class="mb-3">
+            <label for="regEmail" class="form-label">Email</label>
+            <input type="email" class="form-control" id="regEmail" autocomplete="email" maxlength="150" required>
+            <div class="invalid-feedback" id="err-email"></div>
+          </div>
+          <div class="mb-3">
+            <label for="regPassword" class="form-label">Password</label>
+            <input type="password" class="form-control" id="regPassword" autocomplete="new-password" maxlength="72" required aria-describedby="pwHelp">
+            <div class="form-text" id="pwHelp">At least 8 characters with a letter and a number.</div>
+            <div class="invalid-feedback" id="err-password"></div>
+          </div>
+          <button class="btn btn-primary w-100" type="submit" id="registerBtn">Create account</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="text-center mt-3">
+      <button class="btn btn-sm btn-outline-secondary" id="themeBtn" type="button" aria-label="Toggle dark mode"><i class="bi bi-moon-stars"></i> Theme</button>
+    </div>
+  </div>
+</main>
+<script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+<script src="/js/auth.js"></script>
+</body>
+</html>

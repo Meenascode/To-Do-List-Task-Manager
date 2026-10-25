@@ -1,0 +1,16 @@
+# Gradle / build output
+.gradle/
+build/
+out/
+bin/
+# Local database files (created at runtime)
+data/
+*.mv.db
+*.trace.db
+# IDE
+.idea/
+*.iml
+.vscode/*.log
+# OS
+.DS_Store
+Thumbs.db
